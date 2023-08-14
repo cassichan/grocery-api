@@ -31,7 +31,7 @@ namespace GroceryApi.Controllers
             return await _context.GroceryItems.ToListAsync();
         }
 
-        // GET: api/GroceryItems/5
+        // GET: api/GroceryItems/
         [HttpGet("{id}")]
         public async Task<ActionResult<GroceryItem>> GetGroceryItem(long id)
         {
