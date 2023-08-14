@@ -92,7 +92,7 @@ namespace GroceryApi.Controllers
             _context.GroceryItems.Add(groceryItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetGroceryItem", new { id = groceryItem.Id }, groceryItem);
+            return CreatedAtAction(nameof (GetGroceryItem), new { id = groceryItem.Id }, groceryItem);
         }
 
         // DELETE: api/GroceryItems/5
