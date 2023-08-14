@@ -7,6 +7,7 @@ namespace GroceryApi.Models
 		public string? Name { get; set; }
 		public int? Quantity { get; set; }
 		public bool InCart { get; set; }
+		public string? Secret { get; set; }
 	}
 }
 

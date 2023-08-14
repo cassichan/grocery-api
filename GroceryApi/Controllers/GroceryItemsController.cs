@@ -22,23 +22,15 @@ namespace GroceryApi.Controllers
 
         // GET: api/GroceryItems
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GroceryItem>>> GetGroceryItems()
+        public async Task<ActionResult<IEnumerable<GroceryItemDTO>>> GetGroceryItems()
         {
-          if (_context.GroceryItems == null)
-          {
-              return NotFound();
-          }
-            return await _context.GroceryItems.ToListAsync();
+            return await _context.GroceryItems.Select(x => ItemToDTO(x)).ToListAsync();
         }
 
         // GET: api/GroceryItems/
         [HttpGet("{id}")]
-        public async Task<ActionResult<GroceryItem>> GetGroceryItem(long id)
+        public async Task<ActionResult<GroceryItemDTO>> GetGroceryItem(long id)
         {
-          if (_context.GroceryItems == null)
-          {
-              return NotFound();
-          }
             var groceryItem = await _context.GroceryItems.FindAsync(id);
 
             if (groceryItem == null)
@@ -46,35 +38,39 @@ namespace GroceryApi.Controllers
                 return NotFound();
             }
 
-            return groceryItem;
+            return ItemToDTO(groceryItem);
         }
 
         // PUT: api/GroceryItems/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutGroceryItem(long id, GroceryItem groceryItem)
+        public async Task<IActionResult> PutGroceryItem(long id, GroceryItemDTO groceryItemDTO)
         {
-            if (id != groceryItem.Id)
+            if (id != groceryItemDTO.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(groceryItem).State = EntityState.Modified;
+            //_context.Entry(groceryItem).State = EntityState.Modified;
+
+            var groceryItem = await _context.GroceryItems.FindAsync(id);
+            if (groceryItem == null)
+            {
+                return NotFound();
+            }
+
+            groceryItem.Name = groceryItemDTO.Name;
+            groceryItem.Quantity = groceryItemDTO.Quantity;
+            groceryItem.InCart = groceryItemDTO.InCart;
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+
+            catch (DbUpdateConcurrencyException) when (!GroceryItemExists(id))
             {
-                if (!GroceryItemExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
             return NoContent();
@@ -83,26 +79,26 @@ namespace GroceryApi.Controllers
         // POST: api/GroceryItems
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<GroceryItem>> PostGroceryItem(GroceryItem groceryItem)
+        public async Task<ActionResult<GroceryItemDTO>> PostGroceryItem(GroceryItemDTO groceryItemDTO)
         {
-          if (_context.GroceryItems == null)
-          {
-              return Problem("Entity set 'GroceryContext.GroceryItems'  is null.");
-          }
+
+            var groceryItem = new GroceryItem
+            {
+                InCart = groceryItemDTO.InCart,
+                Name = groceryItemDTO.Name,
+                Quantity = groceryItemDTO.Quantity
+            };
+
             _context.GroceryItems.Add(groceryItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof (GetGroceryItem), new { id = groceryItem.Id }, groceryItem);
+            return CreatedAtAction(nameof(GetGroceryItem), new { id = groceryItem.Id }, ItemToDTO(groceryItem));
         }
 
         // DELETE: api/GroceryItems/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGroceryItem(long id)
         {
-            if (_context.GroceryItems == null)
-            {
-                return NotFound();
-            }
             var groceryItem = await _context.GroceryItems.FindAsync(id);
             if (groceryItem == null)
             {
@@ -117,7 +113,16 @@ namespace GroceryApi.Controllers
 
         private bool GroceryItemExists(long id)
         {
-            return (_context.GroceryItems?.Any(e => e.Id == id)).GetValueOrDefault();
+            return _context.GroceryItems.Any(e => e.Id == id);
         }
+
+        private static GroceryItemDTO ItemToDTO(GroceryItem groceryItem) =>
+           new GroceryItemDTO
+           {
+               Id = groceryItem.Id,
+               Name = groceryItem.Name,
+               Quantity = groceryItem.Quantity,
+               InCart = groceryItem.InCart
+           };
     }
 }
